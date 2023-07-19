@@ -3,11 +3,12 @@ import Note from './components/Note.js';
 import { useEffect, useState } from 'react';
 import NotesService from './services/notes/NotesService.js';
 import { login } from './services/login/login';
+import LoginForm from './components/LoginForm';
+import NoteForm from './components/NoteForm';
 
 function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState('');
   const [showAll, setShowAll] = useState(notes);
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
@@ -58,30 +59,18 @@ function App() {
     NotesService.setToken('');
     localStorage.removeItem('loggedUser');
   };
-
-  const handleChange = (e) => {
-    //En cada cambio seteamos la variable newNote
-    setNewNote(e.target.value);
-    //setNewNOte retorna el valor del target
-  };
-
   const handleShowAll = () => {
     setShowAll(!showAll);
   };
 
-  const handleCrateNote = (e) => {
+  const handleCrateNote = (noteToAdd) => {
     //pero solo accederemos a ella cuando demos cilck
-    e.preventDefault();
-    const noteToAdd = {
-      content: newNote,
-    };
     NotesService.createNewNote(noteToAdd, {
       token: user.token,
       user: user._id,
     }).then((result) => {
       setNotes([...notes, result.response]);
     });
-    setNewNote('');
   };
 
   const toogleImportanceOf = (id) => {
@@ -99,47 +88,26 @@ function App() {
     });
   };
 
-  const renderLogin = () => (
-    <form onSubmit={handleLogin}>
-      <input
-        type="text"
-        value={username}
-        placeholder="Username"
-        onChange={(event) => {
-          setUsername(event.target.value);
-        }}
-      />
-      <input
-        type="password"
-        value={password}
-        placeholder="Password"
-        onChange={(event) => {
-          setPassword(event.target.value);
-        }}
-      />
-      <input type="submit" value={'login'} />
-    </form>
-  );
-
-  const renderCreateNote = () => (
-    <>
-      <form onSubmit={handleCrateNote}>
-        <input type="text" onChange={handleChange} value={newNote}></input>
-        <button>Crear Nota</button>
-      </form>
-      <div>
-        <button onClick={handleLogout}>Logout</button>
-      </div>
-    </>
-  );
-
   const notesToShow = showAll ? notes : notes.filter((note) => note.important);
 
   return (
     <div>
       <h1>Notes</h1>
+
       {errorMessage !== '' ? <h3>{errorMessage}</h3> : null}
-      <div>{user ? renderCreateNote() : renderLogin()}</div>
+      <div>
+        {user ? (
+          <NoteForm addNote={handleCrateNote} handleLogout={handleLogout} />
+        ) : (
+          <LoginForm
+            username={username}
+            password={password}
+            handleUsernameChange={(e) => setUsername(e.target.value)}
+            handlePassChange={(e) => setPassword(e.target.value)}
+            handleSubmit={handleLogin}
+          />
+        )}
+      </div>
       <div>
         <button onClick={handleShowAll}>
           {showAll ? 'Show Only Important' : 'Show All'}
